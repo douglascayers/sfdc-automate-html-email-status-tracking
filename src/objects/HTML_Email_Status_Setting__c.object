@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
+    <customSettingsType>Hierarchy</customSettingsType>
+    <description>Configuration options for the &quot;Automate HTML Email Status Tracking&quot; solution by Doug Ayers, https://douglascayers.com</description>
+    <enableFeeds>false</enableFeeds>
+    <fields>
+        <fullName>Days_Ago_Filter__c</fullName>
+        <defaultValue>30</defaultValue>
+        <description>The number of days ago since the email was first sent to monitor for HTML Email Status updates.</description>
+        <externalId>false</externalId>
+        <inlineHelpText>The number of days ago since the email was first sent to monitor for HTML Email Status updates.</inlineHelpText>
+        <label>Days Ago Filter</label>
+        <precision>18</precision>
+        <required>false</required>
+        <scale>0</scale>
+        <trackTrending>false</trackTrending>
+        <type>Number</type>
+        <unique>false</unique>
+    </fields>
+    <label>HTML Email Status Setting</label>
+    <visibility>Protected</visibility>
+</CustomObject>
