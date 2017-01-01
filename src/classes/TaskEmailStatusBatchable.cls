@@ -30,65 +30,6 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
 
         System.debug( 'TaskEmailStatusBatchable.start: context=' + context );
 
-        HTML_Email_Status_Setting__c settings = HTML_Email_Status_Setting__c.getInstance();
-
-        Integer daysAgoFilter = Integer.valueOf( settings.days_ago_filter__c );
-
-        if ( daysAgoFilter == null ) {
-            System.debug( LoggingLevel.WARN, 'No value for custom setting HTML_Email_Status_Setting__c.Days_Ago_Filter__c. Using default value of 30 days.' );
-            daysAgoFilter = 30;
-        }
-
-        Date dateFilter = Date.today().addDays( -1 * Math.abs( daysAgoFilter ) );
-
-        System.debug( 'dateFilter: ' + dateFilter );
-
-        return Database.getQueryLocator([
-            SELECT
-                id, task_id__c, who_id__c
-            FROM
-                HTML_Email_Status__c
-            WHERE
-                (
-                    sent_date__c >= :dateFilter
-                    OR
-                    last_open_date__c >= :dateFilter
-                )
-                AND
-                who_id__c != null
-        ]);
-    }
-
-    public void execute( Database.BatchableContext context, List<HTML_Email_Status__c> emailStatuses ) {
-
-        System.debug( 'TaskEmailStatusBatchable.execute: context=' + context );
-
-        String contactKeyPrefix = Contact.sObjectType.getDescribe().getKeyPrefix();
-        String leadKeyPrefix = Lead.sObjectType.getDescribe().getKeyPrefix();
-
-        Set<ID> taskIds = new Set<ID>();
-        Set<ID> contactIds = new Set<ID>();
-        Set<ID> leadIds = new Set<ID>();
-
-        for ( HTML_Email_Status__c emailStatus : emailStatuses ) {
-
-            String whoKeyPrefix = emailStatus.who_id__c.left( 3 );
-
-            taskIds.add( emailStatus.task_id__c );
-
-            if ( whoKeyPrefix == contactKeyPrefix ) {
-                contactIds.add( emailStatus.who_id__c );
-            }
-            else if ( whoKeyPrefix == leadKeyPrefix ) {
-                leadIds.add( emailStatus.who_id__c );
-            }
-
-        }
-
-        System.debug( 'taskIds: ' + taskIds );
-        System.debug( 'contactIds: ' + contactIds );
-        System.debug( 'leadIds: ' + leadIds );
-
         // At this time, the EmailStatus object is not directly queryable.
         // Please vote for the idea here: https://success.salesforce.com/ideaView?id=08730000000ZzZUAA0)
         //
@@ -101,21 +42,103 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
         // http://www.simplysfdc.com/2015/11/salesforce-email-status.html
         //
         // So that leaves us with option 1.
+        //
+        // To do that then we will query all the Tasks that represent emails (TaskSubType = 'Email')
+        // and use the Task.WhoId to determine the Contacts and Leads that have been sent emails
+        // so that we can turn around and query those objects and obtain the EmailStatus via sub-queries.
+        // This approach means we do not know when the last time an EmailStatus was updated so
+        // even if this job runs daily we can't just have our main query say "grab all the records updated yesterday".
+        // We are querying on Tasks and they aren't updated when EmailStatus is updated, hence why we're here
+        // talking in the first place. So, I introduced the concept of "how many days matter to you?" to our equation.
+        //
+        // In the custom setting Task_Email_Status_Setting__c there is a field that tells us how many days
+        // since a task email was either (a) sent or (b) last opened do we want to query in this batchable.
+        // This lets us apply some semblance of a date filter to amount of records returned to then check if
+        // they have an email status and if so has it been updated.
+        // The default is check tasks that have been sent or last opened in the last 30 days.
+        // If a recipient has not opened the email in 30 days then it falls off the radar for monitoring.
+        // On the other hand, if the recipient does open within the window that resets the time frame for
+        // another 30 days (or however many days the custom setting value is).
+        // If to your company 30 days is too many or too few days to consider the email "active" or "hot"
+        // then adjust the custom setting as necessary.
 
-        List<Task> tasksToUpdate = new List<Task>();
-        List<HTML_Email_Status__c> emailStatusesToUpsert = new List<HTML_Email_Status__c>();
+        Task_Email_Status_Setting__c settings = Task_Email_Status_Setting__c.getInstance();
 
+        Integer daysAgoFilter = Integer.valueOf( settings.days_ago_filter__c );
+
+        if ( daysAgoFilter == null ) {
+            System.debug( LoggingLevel.WARN, 'No value for custom setting Task_Email_Status_Setting__c.Days_Ago_Filter__c. Using default value of 30 days.' );
+            daysAgoFilter = 30;
+        }
+
+        Date dateFilter = Date.today().addDays( -1 * Math.abs( daysAgoFilter ) );
+
+        System.debug( 'dateFilter: ' + dateFilter );
+
+        return Database.getQueryLocator([
+            SELECT
+                id, whoId
+            FROM
+                Task
+            WHERE
+                taskSubType = 'Email'
+                AND
+                whoId != null
+                AND
+                (
+                    email_status_sent_date__c >= :dateFilter
+                    OR
+                    email_status_last_open_date__c >= :dateFilter
+                )
+            ORDER BY
+                whatId,
+                whoId
+        ]);
+    }
+
+    public void execute( Database.BatchableContext context, List<Task> tasks ) {
+
+        System.debug( 'TaskEmailStatusBatchable.execute: context=' + context );
+
+        String contactKeyPrefix = Contact.sObjectType.getDescribe().getKeyPrefix();
+        String leadKeyPrefix = Lead.sObjectType.getDescribe().getKeyPrefix();
+
+        Map<ID, Task> taskIdToTaskMap = new Map<ID, Task>();
         Map<ID, EmailMessage> taskIdToEmailMessageMap = new Map<ID, EmailMessage>();
+
+        Set<ID> contactIds = new Set<ID>();
+        Set<ID> leadIds = new Set<ID>();
+
+        for ( Task tsk : tasks ) {
+
+            String whoKeyPrefix = String.valueOf( tsk.whoId ).left( 3 );
+
+            taskIdToTaskMap.put( tsk.id, tsk );
+
+            if ( whoKeyPrefix == contactKeyPrefix ) {
+                contactIds.add( tsk.whoId );
+            }
+            else if ( whoKeyPrefix == leadKeyPrefix ) {
+                leadIds.add( tsk.whoId );
+            }
+
+        }
+
         for ( EmailMessage message : [
             SELECT
                 id, activityId
             FROM
                 EmailMessage
             WHERE
-                activityId IN :taskIds
+                activityId IN :taskIdToTaskMap.keySet()
         ]) {
             taskIdToEmailMessageMap.put( message.activityId, message );
         }
+
+        System.debug( 'taskIdToTaskMap: ' + taskIdToTaskMap );
+        System.debug( 'taskIdToEmailMessageMap: ' + taskIdToEmailMessageMap );
+        System.debug( 'contactIds: ' + contactIds );
+        System.debug( 'leadIds: ' + leadIds );
 
         for ( Contact cont : [
             SELECT
@@ -126,7 +149,7 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
                     FROM
                         EmailStatuses
                     WHERE
-                        taskId IN :taskIds
+                        taskId IN :taskIdToTaskMap.keySet()
                 )
             FROM
                 Contact
@@ -134,7 +157,7 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
                 id IN :contactIds
         ]) {
 
-            processEmailStatuses( cont.emailStatuses, tasksToUpdate, emailStatusesToUpsert, taskIdToEmailMessageMap );
+            processEmailStatuses( cont.emailStatuses, taskIdToTaskMap, taskIdToEmailMessageMap );
 
         }
 
@@ -147,7 +170,7 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
                     FROM
                         EmailStatuses
                     WHERE
-                        taskId IN :taskIds
+                        taskId IN :taskIdToTaskMap.keySet()
                 )
             FROM
                 Lead
@@ -155,20 +178,16 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
                 id IN :leadIds
         ]) {
 
-            processEmailStatuses( ld.emailStatuses, tasksToUpdate, emailStatusesToUpsert, taskIdToEmailMessageMap );
+            processEmailStatuses( ld.emailStatuses, taskIdToTaskMap, taskIdToEmailMessageMap );
 
         }
 
-        if ( tasksToUpdate.size() > 0 ) {
-            update tasksToUpdate;
+        if ( taskIdToTaskMap.size() > 0 ) {
+            update taskIdToTaskMap.values();
         }
 
         if ( taskIdToEmailMessageMap.size() > 0 ) {
             update taskIdToEmailMessageMap.values();
-        }
-
-        if ( emailStatusesToUpsert.size() > 0 ) {
-            Database.upsert( emailStatusesToUpsert, HTML_Email_Status__c.Task_ID__c );
         }
 
     }
@@ -182,8 +201,8 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
     // -------------------------------------
 
     /**
-     * Iterates the EmailStatus records then applies field updates to the
-     * tasks, email messages, and custom html email statuses records.
+     * Iterates the EmailStatus records then applies field updates
+     * to the tasks and email messages in the passed map arguments.
      *
      * We push the field updates to both tasks and email messages because
      * we don't know if any given org does or does not have Enhanced Email
@@ -194,29 +213,20 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
      * workflow automation around task or email message objects based on these values.
      */
     @TestVisible
-    private void processEmailStatuses( List<EmailStatus> emailStatuses, List<Task> tasksToUpdate, List<HTML_Email_Status__c> emailStatusesToUpsert, Map<ID, EmailMessage> taskIdToEmailMessageMap ) {
+    private void processEmailStatuses( List<EmailStatus> emailStatuses, Map<ID, Task> taskIdToTaskMap, Map<ID, EmailMessage> taskIdToEmailMessageMap ) {
 
         if ( emailStatuses != null && emailStatuses.size() > 0 ) {
 
             for ( EmailStatus status : emailStatuses ) {
 
-                tasksToUpdate.add( new Task(
-                    id = status.taskId,
-                    email_status_sent_date__c = status.createdDate,
-                    email_status_first_open_date__c = status.firstOpenDate,
-                    email_status_last_open_date__c = status.lastOpenDate,
-                    email_status_times_opened__c = status.timesOpened,
-                    email_status_template_name__c = status.emailTemplateName
-                ));
-
-                emailStatusesToUpsert.add( new HTML_Email_Status__c(
-                    task_id__c = status.taskId,
-                    sent_date__c = status.createdDate,
-                    first_open_date__c = status.firstOpenDate,
-                    last_open_date__c = status.lastOpenDate,
-                    times_opened__c = status.timesOpened,
-                    email_template_name__c = status.emailTemplateName
-                ));
+                Task tsk = taskIdToTaskMap.get( status.taskId );
+                if ( tsk != null ) {
+                    tsk.email_status_sent_date__c = status.createdDate;
+                    tsk.email_status_first_open_date__c = status.firstOpenDate;
+                    tsk.email_status_last_open_date__c = status.lastOpenDate;
+                    tsk.email_status_times_opened__c = status.timesOpened;
+                    tsk.email_status_template_name__c = status.emailTemplateName;
+                }
 
                 EmailMessage message = taskIdToEmailMessageMap.get( status.taskId );
                 if ( message != null ) {

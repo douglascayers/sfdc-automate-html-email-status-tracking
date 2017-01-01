@@ -84,24 +84,20 @@ private class TaskEmailStatusBatchableTest {
         // we can't even set field values on the object in memory for unit testing!
         // just as in the other tests, we're at best just testing that most of the
         // mechanics of the batchable are working here.
-
         List<EmailStatus> emailStatuses = new List<EmailStatus>{ new EmailStatus() };
-
-        List<Task> tasksToUpdate = new List<Task>{ new Task() };
-
-        List<HTML_Email_Status__c> emailStatusesToUpsert = new List<HTML_Email_Status__c>{ new HTML_Email_Status__c() };
 
         // because we can't set the taskId property of the EmailStatus object
         // then in the batchable when it tries to retrieve a map value by task id
         // it's actually passing in <null> as the key to retrieve by.
         // to get code coverage, we set a value whose key is <null> and voila
+        Map<ID, Task> taskIdToTaskMap = new Map<ID, Task>{ null => new Task() };
         Map<ID, EmailMessage> taskIdToEmailMessageMap = new Map<ID, EmailMessage>{ null => new EmailMessage() };
 
         Test.startTest();
 
         TaskEmailStatusBatchable batchable = new TaskEmailStatusBatchable();
 
-        batchable.processEmailStatuses( emailStatuses, tasksToUpdate, emailStatusesToUpsert, taskIdToEmailMessageMap );
+        batchable.processEmailStatuses( emailStatuses, taskIdToTaskMap, taskIdToEmailMessageMap );
 
         Test.stopTest();
 

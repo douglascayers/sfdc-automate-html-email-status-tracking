@@ -2,18 +2,8 @@
  * Developed by Doug Ayers
  * douglascayers.com
  */
-trigger TaskEmailStatusTrigger on Task ( after insert, after update, before delete ) {
+trigger TaskEmailStatusTrigger on Task ( before insert ) {
 
-    TaskEmailStatusTriggerHandler handler = new TaskEmailStatusTriggerHandler();
-
-    if ( Trigger.isInsert || Trigger.isUpdate ) {
-
-        handler.upsertEmailStatuses( Trigger.new, Trigger.oldMap );
-
-    } else if ( Trigger.isDelete ) {
-
-        handler.deleteEmailStatuses( Trigger.old );
-
-    }
+    new TaskEmailStatusTriggerHandler().handle( Trigger.new );
 
 }

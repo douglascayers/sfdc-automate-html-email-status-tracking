@@ -19,6 +19,31 @@
     <description>Grants access to the custom activity fields for tracking email status. Users should have this to see the fields on page layouts and reports. Permissions for the &quot;Automate HTML Email Status Tracking&quot; solution by Doug Ayers, https://douglascayers.com</description>
     <fieldPermissions>
         <editable>false</editable>
+        <field>EmailMessage.Email_Status_First_Open_Date__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>EmailMessage.Email_Status_Last_Open_Date__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>EmailMessage.Email_Status_Sent_Date__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>EmailMessage.Email_Status_Template_Name__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
+        <field>EmailMessage.Email_Status_Times_Opened__c</field>
+        <readable>true</readable>
+    </fieldPermissions>
+    <fieldPermissions>
+        <editable>false</editable>
         <field>Event.Email_Status_First_Open_Date__c</field>
         <readable>true</readable>
     </fieldPermissions>
@@ -41,36 +66,6 @@
         <editable>false</editable>
         <field>Event.Email_Status_Times_Opened__c</field>
         <readable>true</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
-        <field>HTML_Email_Status__c.Email_Template_Name__c</field>
-        <readable>false</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
-        <field>HTML_Email_Status__c.First_Open_Date__c</field>
-        <readable>false</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
-        <field>HTML_Email_Status__c.Last_Open_Date__c</field>
-        <readable>false</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
-        <field>HTML_Email_Status__c.Sent_Date__c</field>
-        <readable>false</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
-        <field>HTML_Email_Status__c.Times_Opened__c</field>
-        <readable>false</readable>
-    </fieldPermissions>
-    <fieldPermissions>
-        <editable>false</editable>
-        <field>HTML_Email_Status__c.Who_ID__c</field>
-        <readable>false</readable>
     </fieldPermissions>
     <fieldPermissions>
         <editable>false</editable>
@@ -98,5 +93,5 @@
         <readable>true</readable>
     </fieldPermissions>
     <hasActivationRequired>false</hasActivationRequired>
-    <label>Automate HTML Email Status Tracking - User</label>
+    <label>Task Email Status Tracking</label>
 </PermissionSet>

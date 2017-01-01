@@ -17,16 +17,19 @@
         <members>Activity.Email_Status_Sent_Date__c</members>
         <members>Activity.Email_Status_Template_Name__c</members>
         <members>Activity.Email_Status_Times_Opened__c</members>
+        <members>EmailMessage.Email_Status_First_Open_Date__c</members>
+        <members>EmailMessage.Email_Status_Last_Open_Date__c</members>
+        <members>EmailMessage.Email_Status_Sent_Date__c</members>
+        <members>EmailMessage.Email_Status_Template_Name__c</members>
+        <members>EmailMessage.Email_Status_Times_Opened__c</members>
         <name>CustomField</name>
     </types>
     <types>
-        <members>HTML_Email_Status_Setting__c</members>
-        <members>HTML_Email_Status__c</members>
+        <members>Task_Email_Status_Setting__c</members>
         <name>CustomObject</name>
     </types>
     <types>
-        <members>Automate_HTML_Email_Status_Tracking_Admin</members>
-        <members>Automate_HTML_Email_Status_Tracking_User</members>
+        <members>Task_Email_Status_Tracking</members>
         <name>PermissionSet</name>
     </types>
     <version>38.0</version>

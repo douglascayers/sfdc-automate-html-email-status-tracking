@@ -2,7 +2,7 @@
 <CustomObject xmlns="http://soap.sforce.com/2006/04/metadata">
     <fields>
         <fullName>Email_Status_First_Open_Date__c</fullName>
-        <description>When email was first opened by recipient. Synced via Apex Batch as workaround that EmailStatus object is not directly queryable. Only applicable when the primary WhoId opens the email.</description>
+        <description>When email was first opened by recipient. Synced via Apex Batch as workaround that EmailStatus object is not directly queryable. Only applicable for EmailMessages linked to ActivityId and the primary WhoId opens the email.</description>
         <externalId>false</externalId>
         <inlineHelpText>When email was first opened by recipient.</inlineHelpText>
         <label>Email Status First Open Date</label>
@@ -11,7 +11,7 @@
     </fields>
     <fields>
         <fullName>Email_Status_Last_Open_Date__c</fullName>
-        <description>When email was last opened by recipient. Synced via Apex Batch as workaround that EmailStatus object is not directly queryable. Only applicable when the primary WhoId opens the email.</description>
+        <description>When email was last opened by recipient. Synced via Apex Batch as workaround that EmailStatus object is not directly queryable. Only applicable for EmailMessages linked to ActivityId and the primary WhoId opens the email.</description>
         <externalId>false</externalId>
         <inlineHelpText>When email was last opened by recipient.</inlineHelpText>
         <label>Email Status Last Open Date</label>
@@ -20,7 +20,7 @@
     </fields>
     <fields>
         <fullName>Email_Status_Sent_Date__c</fullName>
-        <description>Date when the email was sent. Synced via Apex Batch as workaround that EmailStatus object is not directly queryable. Only applicable when the primary WhoId opens the email.</description>
+        <description>Date when the email was sent. Synced via Apex Batch as workaround that EmailStatus object is not directly queryable. Only applicable for EmailMessages linked to ActivityId and the primary WhoId opens the email.</description>
         <externalId>false</externalId>
         <inlineHelpText>Date when email was sent.</inlineHelpText>
         <label>Email Status Sent Date</label>
@@ -29,7 +29,7 @@
     </fields>
     <fields>
         <fullName>Email_Status_Template_Name__c</fullName>
-        <description>Name of the email template used, if any. Synced via Apex Batch as workaround that EmailStatus object is not directly queryable. Only applicable when the primary WhoId opens the email.</description>
+        <description>Name of the email template used, if any. Synced via Apex Batch as workaround that EmailStatus object is not directly queryable. Only applicable for EmailMessages linked to ActivityId and the primary WhoId opens the email.</description>
         <externalId>false</externalId>
         <inlineHelpText>Name of the email template used, if any.</inlineHelpText>
         <label>Email Status Template Name</label>
@@ -40,7 +40,7 @@
     </fields>
     <fields>
         <fullName>Email_Status_Times_Opened__c</fullName>
-        <description>How many times email was opened by recipient. Synced via Apex Batch as workaround that EmailStatus object is not directly queryable. Only applicable when the primary WhoId opens the email.</description>
+        <description>How many times email was opened by recipient. Synced via Apex Batch as workaround that EmailStatus object is not directly queryable. Only applicable for EmailMessages linked to ActivityId and the primary WhoId opens the email.</description>
         <externalId>false</externalId>
         <inlineHelpText>How many times email was opened by recipient.</inlineHelpText>
         <label>Email Status Times Opened</label>

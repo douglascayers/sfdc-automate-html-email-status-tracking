@@ -17,6 +17,6 @@
         <type>Number</type>
         <unique>false</unique>
     </fields>
-    <label>HTML Email Status Setting</label>
+    <label>Task Email Status Setting</label>
     <visibility>Protected</visibility>
 </CustomObject>
