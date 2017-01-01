@@ -159,8 +159,6 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
 
         }
 
-
-
         if ( tasksToUpdate.size() > 0 ) {
             update tasksToUpdate;
         }
@@ -183,6 +181,19 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
 
     // -------------------------------------
 
+    /**
+     * Iterates the EmailStatus records then applies field updates to the
+     * tasks, email messages, and custom html email statuses records.
+     *
+     * We push the field updates to both tasks and email messages because
+     * we don't know if any given org does or does not have Enhanced Email
+     * enabled and so we don't know if users will be looking at a task or
+     * email message page layout or reports when checking the status.
+     *
+     * Also, this gives more flexibility to admins if they need to build
+     * workflow automation around task or email message objects based on these values.
+     */
+    @TestVisible
     private void processEmailStatuses( List<EmailStatus> emailStatuses, List<Task> tasksToUpdate, List<HTML_Email_Status__c> emailStatusesToUpsert, Map<ID, EmailMessage> taskIdToEmailMessageMap ) {
 
         if ( emailStatuses != null && emailStatuses.size() > 0 ) {
