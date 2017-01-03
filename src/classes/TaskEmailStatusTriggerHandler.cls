@@ -4,20 +4,44 @@
  */
 public class TaskEmailStatusTriggerHandler {
 
-    /**
-     * Designed to be invoked during 'before insert' or 'before update' trigger events.
-     */
-    public void handle( List<Task> newTasks ) {
+    public void insertStatusDates( List<Task> tasks ) {
 
-        for ( Task newTask : newTasks ) {
+        System.debug( 'inserting task email status dates' );
 
-            if ( newTask.taskSubtype == 'Email' ) {
-                // can't reference CreatedDate because we are in 'before insert' event
-                // and task hasn't been inserted yet to generate a date
-                newTask.email_status_sent_date__c = DateTime.now();
+        List<Task_Email_Status_Date__c> statusDates = new List<Task_Email_Status_Date__c>();
+
+        for ( Task tsk : tasks ) {
+
+            if ( tsk.taskSubtype == 'Email' && String.isNotBlank( tsk.whoId ) ) {
+                statusDates.add( new Task_Email_Status_Date__c(
+                    task_id__c = tsk.id,
+                    who_id__c = tsk.whoId,
+                    date__c = tsk.createdDate.date()
+                ));
             }
 
         }
+
+        System.debug( 'tasks: ' + tasks );
+        System.debug( 'statusDates: ' + statusDates );
+
+        if ( statusDates.size() > 0 ) {
+            insert statusDates;
+        }
+
+    }
+
+    public void deleteStatusDates( List<Task> tasks ) {
+
+        System.debug( 'deleting task email status dates' );
+
+        Set<String> taskIds = new Set<String>();
+        for ( Task tsk : tasks ) {
+            taskIds.add( tsk.id );
+            taskIds.add( String.valueOf( tsk.id ).left( 15 ) );
+        }
+
+        delete [ SELECT id FROM Task_Email_Status_Date__c WHERE task_id__c IN :taskIds ];
 
     }
 

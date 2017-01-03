@@ -25,6 +25,7 @@
         <name>CustomField</name>
     </types>
     <types>
+        <members>Task_Email_Status_Date__c</members>
         <members>Task_Email_Status_Setting__c</members>
         <name>CustomObject</name>
     </types>

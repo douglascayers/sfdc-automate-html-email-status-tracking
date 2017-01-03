@@ -77,26 +77,18 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
 
         return Database.getQueryLocator([
             SELECT
-                id, whoId
+                id, task_id__c, who_id__c, date__c
             FROM
-                Task
+                Task_Email_Status_Date__c
             WHERE
-                taskSubType = 'Email'
-                AND
-                whoId != null
-                AND
-                (
-                    email_status_sent_date__c >= :dateFilter
-                    OR
-                    email_status_last_open_date__c >= :dateFilter
-                )
+                date__c >= :dateFilter
             ORDER BY
-                whatId,
-                whoId
+                task_id__c,
+                who_id__c
         ]);
     }
 
-    public void execute( Database.BatchableContext context, List<Task> tasks ) {
+    public void execute( Database.BatchableContext context, List<Task_Email_Status_Date__c> statusDates ) {
 
         System.debug( 'TaskEmailStatusBatchable.execute: context=' + context );
 
@@ -105,21 +97,22 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
 
         Map<ID, Task> taskIdToTaskMap = new Map<ID, Task>();
         Map<ID, EmailMessage> taskIdToEmailMessageMap = new Map<ID, EmailMessage>();
+        Map<ID, Task_Email_Status_Date__c> taskIdToStatusDateMap = new Map<ID, Task_Email_Status_Date__c>();
 
         Set<ID> contactIds = new Set<ID>();
         Set<ID> leadIds = new Set<ID>();
 
-        for ( Task tsk : tasks ) {
+        for ( Task_Email_Status_Date__c statusDate : statusDates ) {
 
-            String whoKeyPrefix = String.valueOf( tsk.whoId ).left( 3 );
+            String whoKeyPrefix = String.valueOf( statusDate.who_id__c ).left( 3 );
 
-            taskIdToTaskMap.put( tsk.id, tsk );
+            taskIdToTaskMap.put( statusDate.task_id__c, new Task( id = statusDate.task_id__c ) );
 
             if ( whoKeyPrefix == contactKeyPrefix ) {
-                contactIds.add( tsk.whoId );
+                contactIds.add( statusDate.who_id__c );
             }
             else if ( whoKeyPrefix == leadKeyPrefix ) {
-                leadIds.add( tsk.whoId );
+                leadIds.add( statusDate.who_id__c );
             }
 
         }
@@ -157,7 +150,7 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
                 id IN :contactIds
         ]) {
 
-            processEmailStatuses( cont.emailStatuses, taskIdToTaskMap, taskIdToEmailMessageMap );
+            processEmailStatuses( cont.emailStatuses, taskIdToTaskMap, taskIdToEmailMessageMap, taskIdToStatusDateMap );
 
         }
 
@@ -178,7 +171,7 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
                 id IN :leadIds
         ]) {
 
-            processEmailStatuses( ld.emailStatuses, taskIdToTaskMap, taskIdToEmailMessageMap );
+            processEmailStatuses( ld.emailStatuses, taskIdToTaskMap, taskIdToEmailMessageMap, taskIdToStatusDateMap );
 
         }
 
@@ -188,6 +181,10 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
 
         if ( taskIdToEmailMessageMap.size() > 0 ) {
             update taskIdToEmailMessageMap.values();
+        }
+
+        if ( taskIdToStatusDateMap.size() > 0 ) {
+            update taskIdToStatusDateMap.values();
         }
 
     }
@@ -213,7 +210,7 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
      * workflow automation around task or email message objects based on these values.
      */
     @TestVisible
-    private void processEmailStatuses( List<EmailStatus> emailStatuses, Map<ID, Task> taskIdToTaskMap, Map<ID, EmailMessage> taskIdToEmailMessageMap ) {
+    private void processEmailStatuses( List<EmailStatus> emailStatuses, Map<ID, Task> taskIdToTaskMap, Map<ID, EmailMessage> taskIdToEmailMessageMap, Map<ID, Task_Email_Status_Date__c> taskIdToStatusDateMap ) {
 
         if ( emailStatuses != null && emailStatuses.size() > 0 ) {
 
@@ -235,6 +232,12 @@ public without sharing class TaskEmailStatusBatchable implements Database.Batcha
                     message.email_status_last_open_date__c = status.lastOpenDate;
                     message.email_status_times_opened__c = status.timesOpened;
                     message.email_status_template_name__c = status.emailTemplateName;
+                }
+
+                Task_Email_Status_Date__c statusDate = taskIdToStatusDateMap.get( status.taskId );
+                if ( statusDate != null ) {
+                    DateTime maxDateTime = ( status.lastOpenDate > status.createdDate ) ? status.lastOpenDate : status.createdDate;
+                    statusDate.date__c = ( maxDateTime != null ) ? maxDateTime.date() : null;
                 }
 
             }

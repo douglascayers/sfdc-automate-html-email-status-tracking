@@ -34,11 +34,21 @@ private class TaskEmailStatusTriggerHandlerTest {
 
         insert tsk;
 
+        tsk = [ SELECT id, whoId, createdDate FROM Task WHERE id = :tsk.id ];
+
+        Task_Email_Status_Date__c statusDate = [ SELECT id, task_id__c, who_id__c, date__c FROM Task_Email_Status_Date__c WHERE task_id__c = :tsk.id ];
+
+        System.debug( tsk );
+        System.debug( statusDate );
+
+        System.assert( tsk.createdDate.date().isSameDay( statusDate.date__c ) );
+        System.assertEquals( tsk.whoId, statusDate.who_id__c );
+
+        delete tsk;
+
+        System.assertEquals( 0, [ SELECT count() FROM Task_Email_Status_Date__c WHERE task_id__c = :tsk.id ] );
+
         Test.stopTest();
-
-        tsk = [ SELECT id, createdDate, email_status_sent_date__c FROM Task WHERE id = :tsk.id ];
-
-        System.assert( tsk.createdDate.isSameDay( tsk.email_status_sent_date__c ) );
 
     }
 

@@ -92,12 +92,13 @@ private class TaskEmailStatusBatchableTest {
         // to get code coverage, we set a value whose key is <null> and voila
         Map<ID, Task> taskIdToTaskMap = new Map<ID, Task>{ null => new Task() };
         Map<ID, EmailMessage> taskIdToEmailMessageMap = new Map<ID, EmailMessage>{ null => new EmailMessage() };
+        Map<ID, Task_Email_Status_Date__c> taskIdToStatusDateMap = new Map<ID, Task_Email_Status_Date__c>{ null => new Task_Email_Status_Date__c() };
 
         Test.startTest();
 
         TaskEmailStatusBatchable batchable = new TaskEmailStatusBatchable();
 
-        batchable.processEmailStatuses( emailStatuses, taskIdToTaskMap, taskIdToEmailMessageMap );
+        batchable.processEmailStatuses( emailStatuses, taskIdToTaskMap, taskIdToEmailMessageMap, taskIdToStatusDateMap );
 
         Test.stopTest();
 
